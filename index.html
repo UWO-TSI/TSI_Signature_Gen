@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TSI Local Signature Viewer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; }
+    .signature {
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin: 1em 0;
+    }
+    input, button {
+      padding: 8px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>TSI Signature Generator (Local CSV)</h2>
+
+<p>Select <code>directory.csv</code> (with name, role, phone, email):</p>
+<input type="file" id="csvInput" accept=".csv" />
+<button onclick="generateSignatures()">Generate Signatures</button>
+
+<div id="output"></div>
+
+<script>
+function splitCSVLine(line) {
+  const result = [];
+  let current = '', insideQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"' && line[i + 1] === '"') {
+      current += '"'; i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === ',' && !insideQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+async function generateSignatures() {
+  const fileInput = document.getElementById('csvInput');
+  const file = fileInput.files[0];
+  if (!file) return alert("Please select your directory.csv file.");
+
+  const text = await file.text();
+  const lines = text.trim().split('\n');
+  const output = document.getElementById('output');
+  output.innerHTML = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const cols = splitCSVLine(lines[i]);
+    if (cols.length < 8) continue;
+
+    const name = cols[0];
+    const role = cols[1];
+    const phone = cols[6];
+    const email = cols[7];
+
+    const html = `
+    <div style="font-family: sans-serif; font-size: 10px; color: #000; line-height: 1.1;">
+        <table>
+        <tr>
+            <td style="padding-right: 15px;">
+            <img src="tsilogo.jpg" alt="TSI Logo" width="80">
+            </td>
+            <td>
+            <strong style="font-size: 12px;">${name}</strong><br>
+            <span style="font-style: italic; font-size: 11px; color: #78b8c0;">${role} @ TSI</span><br>
+            <a href="mailto:${email}" style="font-style: italic; font-size: 11px; color: #78b8c0; text-decoration: none;">${email}</a> 
+            <span style="font-style: italic; font-size: 11px; color: #78b8c0;"> | ${phone}</span>
+            </td>
+        </tr>
+        </table>
+        <hr style="margin: 8px 0; border: none; border-top: 1px solid #78b8c0;">
+    </div>
+    `;
+
+
+
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'signature';
+    wrapper.innerHTML = html;
+    output.appendChild(wrapper);
+  }
+}
+</script>
+
+</body>
+</html>
